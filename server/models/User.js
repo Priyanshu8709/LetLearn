@@ -16,6 +16,14 @@ exports.UserSchema=new mongoose.Schema({
         required:true,
         unique:true,
     },
+    token:{
+        type:String,
+        required:false,
+    },
+    resetPasswordExpires:{
+        type:Date,
+        required:false,
+    },
     password:{
         type:String,
         required:true,
