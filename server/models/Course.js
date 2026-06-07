@@ -46,6 +46,10 @@ exports.CourseSchema=new mongoose.Schema({
         required:true,
         ref:"User",
     }],
+    active:{
+        type:Boolean,
+        default:true,
+    }
 });
 
 module.exports=mongoose.model("Course",exports.CourseSchema);
