@@ -425,7 +425,3 @@ exports.enableDisableCourse=async(req,res)=>{
         });
     }
 };
-
-
-
-

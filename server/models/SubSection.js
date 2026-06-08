@@ -15,6 +15,10 @@ exports.SubSectionSchema=new mongoose.Schema({
         required:false,
         trim:true,
     },
+    videoUrl:{
+        type:String,
+        required:false,
+    },
 });
 
 module.exports=mongoose.model("SubSection",exports.SubSectionSchema);
