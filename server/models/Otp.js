@@ -1,6 +1,6 @@
-import { mailSender } from "../utils/mailSender.js";
+const mailSender = require("../utils/mailSender");
 const mongoose = require("mongoose");
-exports.OtpSchema=new mongoose.Schema({
+const OtpSchema = new mongoose.Schema({
     email:{
         type:String,
         required:true,
@@ -30,4 +30,4 @@ OtpSchema.pre("save", async function(next) {
     await createOtp(this.email, this.otp);
     next();
 });
-module.exports=mongoose.model("Otp",exports.OtpSchema);
+module.exports = mongoose.model("Otp", OtpSchema);

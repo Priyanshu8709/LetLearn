@@ -1,5 +1,5 @@
 const Inquiry=require("../models/Inquiry");
-const {User}=require("../models/user");
+const User=require("../models/User");
 
 exports.createInquiry=async(req,res)=>{
     try{

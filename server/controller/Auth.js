@@ -1,5 +1,5 @@
-import {mailSender} from "../utils/mailSender.js";
-const user = require("../models/User");;
+const mailSender = require("../utils/mailSender");
+const user = require("../models/User");
 const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const OtpGenerator = require("otp-generator");

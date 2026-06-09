@@ -1,4 +1,4 @@
-const RatingAndReview = rquire("../models/RatingAndReview");
+const RatingAndReview = require("../models/RatingAndReview");
 const Course = require("../models/Course");
 
 exports.addRatingAndReview = async (req, res) => {

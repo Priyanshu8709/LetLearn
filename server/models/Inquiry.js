@@ -1,4 +1,6 @@
-InquirySchema=new mongoose.Schema({
+const mongoose = require('mongoose');
+
+const InquirySchema = new mongoose.Schema({
     UserId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
