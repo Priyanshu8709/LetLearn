@@ -60,6 +60,7 @@ exports.deleteUser=async(req,res)=>{
         if(!userId){
             return res.status(404).json({ error: 'User ID is missing' });
         }
+        //cronet job can be implemented to delete user data after a certain period instead of deleting it immediately
         const profileId=user.additionalDetails;
         await Profile.findByIdAndDelete(profileId);
         //unenroll user from all courses and delete progress (to be implemented)
