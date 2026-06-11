@@ -7,7 +7,6 @@
 A modern and feature-rich e-learning platform built with the MERN Stack, designed to provide an engaging and seamless learning experience for students and instructors.
 
 ![MERN](https://img.shields.io/badge/Stack-MERN-green)
-![License](https://img.shields.io/badge/License-MIT-blue)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange)
 
