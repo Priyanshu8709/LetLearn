@@ -10,10 +10,13 @@ exports.TagSchema=new mongoose.Schema({
         required:false,
         trim:true
     },
-    course:{
+    courses:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Course",
-        required:true
+    }],
+    createdAt:{
+        type:Date,
+        default:Date.now,
     }
 });
 

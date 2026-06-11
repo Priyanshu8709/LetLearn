@@ -3,6 +3,8 @@ exports.RatingAndReviewSchema=new mongoose.Schema({
     rating:{
         type:Number,
         required:true,
+        min:1,
+        max:5,
     },
     review:{
         type:String,
@@ -18,6 +20,14 @@ exports.RatingAndReviewSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Course",
         required:true
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now,
+    },
+    updatedAt:{
+        type:Date,
+        default:Date.now,
     }
 });
 module.exports=mongoose.model("RatingAndReview",exports.RatingAndReviewSchema);

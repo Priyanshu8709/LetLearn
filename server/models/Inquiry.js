@@ -14,5 +14,14 @@ const InquirySchema = new mongoose.Schema({
         type:String,
         required:true,
     },
+    status:{
+        type:String,
+        enum:["pending","answered"],
+        default:"pending"
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now,
+    },
 });
 module.exports=mongoose.model('Inquiry', InquirySchema);

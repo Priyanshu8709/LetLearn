@@ -18,17 +18,17 @@ exports.CourseSchema=new mongoose.Schema({
     },
     whatYouWillLearn:{
         type:String,
-        required:true,    
+        required:true,
     },
     sections:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Section",
         required:true,
     }],
-    RatingAndReview:{
+    RatingAndReview:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"RatingAndReview",
-    },
+    }],
     price:{
         type:Number,
         required:true,
@@ -49,7 +49,21 @@ exports.CourseSchema=new mongoose.Schema({
     active:{
         type:Boolean,
         default:true,
-    }
+    },
+    averageRating:{
+        type:Number,
+        default:0,
+        min:0,
+        max:5,
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now,
+    },
+    updatedAt:{
+        type:Date,
+        default:Date.now,
+    },
 });
 
 module.exports=mongoose.model("Course",exports.CourseSchema);

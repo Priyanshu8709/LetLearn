@@ -52,6 +52,10 @@ exports.UserSchema=new mongoose.Schema({
             ref:"CourseProgress",
         }
     }],
+    isBlocked:{
+        type:Boolean,
+        default:false,
+    },
 });
 
 module.exports=mongoose.model("User",exports.UserSchema); 

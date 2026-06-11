@@ -12,13 +12,13 @@ exports.createTag=async(req,res)=>{
         res.status(201).send({message:"Tag created successfully",tag:tagDetails});
     }
     catch(error){
-        res.ststus(500).send({error:"Error creating tag"});
+        res.status(500).send({error:"Error creating tag"});
     }
 };
 
 exports.getAllTags=async(req,res)=>{
     try{
-        const alltags=await tag.find({},{name:true,description:true});
+        const alltags=await Tag.find({},{name:true,description:true});
         res.status(200).json({
             sucess:true,
             message:"sucessfully got all the tags",

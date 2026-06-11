@@ -49,11 +49,11 @@ exports.updateSection = async (req, res) => {
         if(!sectionId || !sectionName){
             return res.status(404).json({ error: 'Section ID or name is missing' });
         }
-        const Section = await Section.findByIdAndUpdate(sectionId, { sectionTitle: sectionName }, { new: true });
-        if(!Section){
+        const updatedSection = await Section.findByIdAndUpdate(sectionId, { sectionTitle: sectionName }, { new: true });
+        if(!updatedSection){
             return res.status(404).json({ error: 'Section not found' });
         }
-        return res.status(200).json({ message: 'Section updated successfully', section: Section });
+        return res.status(200).json({ message: 'Section updated successfully', section: updatedSection });
 
     }
     catch(error){

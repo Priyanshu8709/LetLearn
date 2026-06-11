@@ -40,7 +40,7 @@ exports.deleteSubSection = async (req, res) => {
         if(!sectionId || !subSectionId){
             return res.status(404).json({ error: 'Section ID or Subsection ID is missing' });
         }
-        subSection = await SubSection.findById(subSectionId);
+        const subSection = await SubSection.findById(subSectionId);
         if(!subSection){
             return res.status(404).json({ error: 'Subsection not found' });
         }
@@ -48,8 +48,8 @@ exports.deleteSubSection = async (req, res) => {
         if(!section){
             return res.status(404).json({ error: 'Section not found' });
         }
-        const subSection = section.subSections.id(subSectionId);
-        if(!subSection){
+        const foundSubSection = section.subSections.id(subSectionId);
+        if(!foundSubSection){
             return res.status(404).json({ error: 'Subsection not found' });
         }
         await SubSection.findByIdAndDelete(subSectionId);
@@ -64,22 +64,27 @@ exports.deleteSubSection = async (req, res) => {
 exports.updateSubSection = async (req, res) => {
     try{
         const {subSectionId,title,timeDuration,description} = req.body;
-        const video=req.files.videoFile;
-        if(!subSectionId || !title || !timeDuration || !video || !description){
+        const video=req.files?.videoFile;
+        if(!subSectionId || !title || !timeDuration || !description){
             return res.status(404).json({ error: 'Missing required fields' });
         }
-        try{
-            const videoUrl = await uploadFileToCloud(video);
-        }
-        catch(error){
-            return res.status(500).json({ error: 'Video upload failed' });
-        }
-        const updatedSubSection = await SubSection.findByIdAndUpdate(subSectionId, { 
+        const updateData = {
             title:title,
             timeDuration:timeDuration,
             description:description,
-            videoUrl: videoUrl
-        }, { new: true });
+        };
+
+        if(video){
+            try{
+                const videoUrl = await uploadFileToCloud(video);
+                updateData.videoUrl = videoUrl;
+            }
+            catch(error){
+                return res.status(500).json({ error: 'Video upload failed' });
+            }
+        }
+
+        const updatedSubSection = await SubSection.findByIdAndUpdate(subSectionId, updateData, { new: true });
 
         if(!updatedSubSection){
             return res.status(404).json({ error: 'Subsection not found' });

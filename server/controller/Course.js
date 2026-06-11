@@ -15,7 +15,7 @@ exports.createCourse=async(req,res)=>{
         }
         const userID=req.user.id;
         const instructor=await User.findById(userID);
-        if(!instructor.accountType=="instrctor"){
+        if(instructor.accountType!=="instructor"){
             return res.status(404).json({
                 sucess:false,
                 message:"You are not the instructor"
@@ -46,7 +46,7 @@ exports.createCourse=async(req,res)=>{
             tag:tagDetails._id,
             tumbnail:thumbnailImage.secure_url,
         });
-        await User.findByIDAndUpdate(
+        await User.findByIdAndUpdate(
             {_id:instructor._id},
             {
                 $push:{
@@ -56,7 +56,7 @@ exports.createCourse=async(req,res)=>{
             {new:true}
         );
 
-        await Tag.findByIDAndUpdate(
+        await Tag.findByIdAndUpdate(
             {_id:tagDetails._id},
             {
                 $push:{
@@ -85,7 +85,7 @@ exports.createCourse=async(req,res)=>{
 
 exports.getAllCourse=async(req,res)=>{
     try{
-        const allCourses=await courses.find({},{
+        const allCourses=await Course.find({},{
             courseName:true,
             courseDescription:true,
             price:true,
@@ -95,8 +95,7 @@ exports.getAllCourse=async(req,res)=>{
             RatingAndReview:true,
             StudentsEnrolled:true,
             tag:true
-            .populate("instructor").exec()
-        });
+        }).populate("instructor").exec();
         return res.status(200).json({
             sucess:true,
             message:"Sucessfully Got all the Data",
@@ -220,7 +219,7 @@ exports.deleteCourse=async(req,res)=>{
         }
         const userID=req.user.id;
         const instructor=await User.findById(userID);
-        if(!instructor.accountType=="instrctor"){
+        if(instructor.accountType!=="instructor"){
             return res.status(404).json({
                 sucess:false,
                 message:"You are not the instructor"
@@ -271,7 +270,7 @@ exports.enrollCourse=async(req,res)=>{
         }
         const userID=req.user.id;
         const student=await User.findById(userID);
-        if(!student.accountType=="student"){
+        if(student.accountType!=="student"){
             return res.status(404).json({
                 sucess:false,
                 message:"You are not the student"
@@ -305,7 +304,7 @@ exports.getInstructorCourses=async(req,res)=>{
     try{
         const userID=req.user.id;
         const instructor=await User.findById(userID);
-        if(!instructor.accountType=="instrctor"){
+        if(instructor.accountType!=="instructor"){
             return res.status(404).json({
                 sucess:false,
                 message:"You are not the instructor"
@@ -373,8 +372,8 @@ exports.getTopRatedCourses=async(req,res)=>{
 
 exports.getCoursesByTag=async(req,res)=>{
     try{
-        const tagID=req.params.tagID;
-        const courses=await Course.find({tag:tagID});
+        const tagId=req.params.tagId;
+        const courses=await Course.find({tag:tagId});
         return res.status(200).json({
             sucess:true,
             message:"Sucessfully got the courses by tag",
@@ -402,7 +401,7 @@ exports.enableDisableCourse=async(req,res)=>{
         }
         const userID=req.user.id;
         const instructor=await User.findById(userID);
-        if(!instructor.accountType=="instrctor"){
+        if(instructor.accountType!=="instructor"){
             return res.status(404).json({
                 sucess:false,
                 message:"You are not the instructor"
@@ -420,6 +419,52 @@ exports.enableDisableCourse=async(req,res)=>{
         return res.status(500).json({
             sucess:false,
             message:"Error while enabling/disabling the course",
+            error:error.message
+        });
+    }
+};
+
+exports.searchCourses=async(req,res)=>{
+    try{
+        const {query,tag,minPrice,maxPrice,rating}=req.query;
+        let filter={active:true};
+
+        if(query){
+            filter.$or=[
+                {courseName:{$regex:query,$options:'i'}},
+                {courseDescription:{$regex:query,$options:'i'}},
+            ];
+        }
+
+        if(tag){
+            filter.tag=tag;
+        }
+
+        if(minPrice || maxPrice){
+            filter.price={};
+            if(minPrice) filter.price.$gte=parseFloat(minPrice);
+            if(maxPrice) filter.price.$lte=parseFloat(maxPrice);
+        }
+
+        if(rating){
+            filter.averageRating={$gte:parseFloat(rating)};
+        }
+
+        const courses=await Course.find(filter)
+            .populate("instructor")
+            .populate("tag")
+            .sort({createdAt:-1});
+
+        return res.status(200).json({
+            sucess:true,
+            message:"Courses found successfully",
+            data:courses
+        });
+    }
+    catch(error){
+        return res.status(500).json({
+            sucess:false,
+            message:"Error while searching courses",
             error:error.message
         });
     }

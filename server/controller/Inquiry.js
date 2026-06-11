@@ -12,7 +12,7 @@ exports.createInquiry=async(req,res)=>{
         if(!user){
             return res.status(404).json({ error: 'User not found' });
         }
-        if(User.accountType.includes('instructor')){
+        if(user.accountType.includes('instructor')){
             return res.status(403).json({ error: 'Instructors are not allowed to create inquiries' });
         }
         const inquiry = new Inquiry({ UserId, courseId, message });

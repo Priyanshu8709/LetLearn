@@ -51,30 +51,31 @@ exports.signUp=async(req,res)=>{
         return res.status(400).json({message:"User with this email already exists"});
         }
         const RecentOtp=await Otp.findOne({email}).sort({createdAt:-1}).limit(1);
-        if(RecentOtp.otp==0){
+        if(!RecentOtp){
             return res.status(400).json({message:"Invalid OTP"});
         }
-        const isValidOtp=await bcrypt.compare(RecentOtp.otp,otp);
+        const isValidOtp=await bcrypt.compare(password,RecentOtp.otp);
         if(!isValidOtp){
             return res.status(400).json({message:"Invalid OTP"});
         }
         const salt=await bcrypt.genSalt(10);
         const hashedPassword=await bcrypt.hash(password,salt);
 
-        const profileDetails={
+        const Profile=require("../models/Profile");
+        const profileDetails=await Profile.create({
             gender:null,
             DoB:null,
             about:null,
             contactNumber:null,
             address:null,
-        };
+        });
         const newUser=await user.create({
             firstname,
             lastname,
             email,
             password:hashedPassword,
             accountType,
-            additionalDetails:profileDetails,
+            additionalDetails:profileDetails._id,
             courses:[],
             images:"https://api.dicebear.com/10.x/dylan/svg?seed=Felix",
             courseProgress:[],

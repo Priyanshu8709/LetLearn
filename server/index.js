@@ -1,13 +1,67 @@
-const express = require('express')
-const app = express()
-const port = 3000
-const db = require('./config/db')
+const express = require('express');
+const cors = require('cors');
+const fileUpload = require('express-fileupload');
+const dotenv = require('dotenv');
+const cloudinary = require('cloudinary').v2;
 
-db.connect()
+const db = require('./config/db');
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use('/api', require('./routes'))
+dotenv.config();
 
-app.get('/', (req, res) => res.send('Hello World!'))
-app.listen(port, () => console.log(`App listening on port ${port}!`))
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Database connection
+db.connect();
+
+// Cloudinary configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Middleware
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+}));
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    limits: { fileSize: 50 * 1024 * 1024 },
+}));
+
+// Routes
+app.use('/api', require('./routes'));
+
+// Health check
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: 'Server is running' });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+module.exports = app;

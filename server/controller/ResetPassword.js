@@ -4,6 +4,7 @@ const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const OtpGenerator = require("otp-generator");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 require("dotenv").config();
 
 exports.resetPassword=async(req,res)=>{

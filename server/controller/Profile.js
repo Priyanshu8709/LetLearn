@@ -24,7 +24,7 @@ exports.updateProfile=async(req,res)=>{
         profile.about=about;
         profile.contactNumber=contactNumber;
         profile.gender=gender;
-        await profile.save();   
+        const updatedProfile=await profile.save();
         return res.status(200).json({ message: 'Profile updated successfully', profile: updatedProfile });
     }
     catch(error){
@@ -61,13 +61,14 @@ exports.deleteUser=async(req,res)=>{
             return res.status(404).json({ error: 'User ID is missing' });
         }
         //cronet job can be implemented to delete user data after a certain period instead of deleting it immediately
-        const profileId=user.additionalDetails;
-        await Profile.findByIdAndDelete(profileId);
-        //unenroll user from all courses and delete progress (to be implemented)
-        const user = await User.findByIdAndDelete(userId);
-        if(!user){
+        const userToDelete = await User.findById(userId);
+        if(!userToDelete){
             return res.status(404).json({ error: 'User not found' });
         }
+        const profileId=userToDelete.additionalDetails;
+        await Profile.findByIdAndDelete(profileId);
+        //unenroll user from all courses and delete progress (to be implemented)
+        await User.findByIdAndDelete(userId);
         return res.status(200).json({ message: 'User deleted successfully' });
     }
     catch(error){
