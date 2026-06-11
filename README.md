@@ -354,12 +354,6 @@ git push origin feature/AmazingFeature
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
 <div align="center">
 
 ## ⭐ If you like LetLearn, don't forget to star the repository!
