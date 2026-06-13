@@ -4,6 +4,7 @@ const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const OtpGenerator = require("otp-generator");
 const bcrypt = require("bcrypt");
+const { otpEmail, passwordChangedEmail } = require("../templates/emailTemplates");
 require("dotenv").config();
 
 exports.sendOtp=async(req,res)=>{
@@ -14,24 +15,32 @@ exports.sendOtp=async(req,res)=>{
         return res.status(400).json({message:"User with this email already exists"});
         }
 
-        const otp=OtpGenerator.generate(6,{
+        let otp=OtpGenerator.generate(6,{
             upperCaseAlphabets:false,
             lowerCaseAlphabets:false,
             specialChars:false
         });
-        const result=await Otp.findOne({otp:otp});
+        let result=await Otp.findOne({otp:otp});
         while(result){
-            const otp=OtpGenerator.generate(6,{
+            otp=OtpGenerator.generate(6,{
                 upperCaseAlphabets:false,
                 lowerCaseAlphabets:false,
                 specialChars:false
             });
-            const result=await Otp.findOne({otp:otp});
+            result=await Otp.findOne({otp:otp});
         }
         const salt=await bcrypt.genSalt(10);
         const hashedOtp=await bcrypt.hash(otp,salt);
         const payload={email,otp:hashedOtp};
-        const otpBody= await Otp.create(payload);
+        await Otp.create(payload);
+        await mailSender(
+            email,
+            "Verify your LetLearn email",
+            otpEmail({
+                otp,
+                expiresInMinutes: process.env.OTP_EXPIRE || 5,
+            })
+        );
         return res.status(200).json({message:"OTP sent successfully"});
     }
     catch (error) {
@@ -42,8 +51,8 @@ exports.sendOtp=async(req,res)=>{
 
 exports.signUp=async(req,res)=>{
     try{
-        const{firstname,lastname,email,password,accountType}=req.body;
-        if(!firstname || !lastname || !email || !password || !accountType){ 
+        const{firstname,lastname,email,password,otp,accountType}=req.body;
+        if(!firstname || !lastname || !email || !password || !otp || !accountType){ 
             return res.status(400).json({message:"All fields are required"});
         }
         const existingUser=await user.findOne({email});
@@ -52,9 +61,9 @@ exports.signUp=async(req,res)=>{
         }
         const RecentOtp=await Otp.findOne({email}).sort({createdAt:-1}).limit(1);
         if(!RecentOtp){
-            return res.status(400).json({message:"Invalid OTP"});
+            return res.status(400).json({message:"OTP not found. Please request a new OTP."});
         }
-        const isValidOtp=await bcrypt.compare(password,RecentOtp.otp);
+        const isValidOtp=await bcrypt.compare(otp, RecentOtp.otp);
         if(!isValidOtp){
             return res.status(400).json({message:"Invalid OTP"});
         }
@@ -62,13 +71,7 @@ exports.signUp=async(req,res)=>{
         const hashedPassword=await bcrypt.hash(password,salt);
 
         const Profile=require("../models/Profile");
-        const profileDetails=await Profile.create({
-            gender:null,
-            DoB:null,
-            about:null,
-            contactNumber:null,
-            address:null,
-        });
+        const profileDetails=await Profile.create({});
         const newUser=await user.create({
             firstname,
             lastname,
@@ -90,39 +93,33 @@ exports.signUp=async(req,res)=>{
 
 exports.login=async(req,res)=>{
     try{
-
         const {email,password}=req.body;
         if(!email || !password){
             return res.status(400).json({message:"All fields are required"});
         }
-        const recentOtp=await Otp.findOne({email}).sort({createdAt:-1}).limit(1);
-        if(recentOtp){
-            const isValidOtp=await bcrypt.compare(recentOtp.otp,password);
-            if(!isValidOtp){
-                return res.status(400).json({message:"Invalid OTP"});
-            }
-        }else{
-            return res.status(400).json({message:"Invalid OTP"});
-        } 
-       
+
         const existingUser=await user.findOne({email});
         if(!existingUser){
-        return res.status(400).json({message:"User with this email does not exist"});
+            return res.status(400).json({message:"User with this email does not exist"});
         }
-        if(await bcrypt.compare(password,existingUser.password)){
-            const payload={
-                id:existingUser._id,
-                email:existingUser.email,
-                role:existingUser.accountType,
-            }
-            const token=jwt.sign(payload,process.env.JWT_SECRET,{expiresIn:"1h"});
-            existingUser.password=undefined;
-            res.cookie("token",token,{
-                httpOnly:true,
-                secure:process.env.NODE_ENV==="production",
-                expires:new Date(Date.now()+3*24*60*60*1000), // 3 days
-            }).status(200).json({message:"Logged in successfully",user:existingUser,token});
+
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+        if(!isPasswordValid){
+            return res.status(400).json({message:"Invalid password"});
         }
+
+        const payload={
+            id:existingUser._id,
+            email:existingUser.email,
+            role:existingUser.accountType,
+        }
+        const token=jwt.sign(payload,process.env.JWT_SECRET,{expiresIn:"1h"});
+        existingUser.password=undefined;
+        res.cookie("token",token,{
+            httpOnly:true,
+            secure:process.env.NODE_ENV==="production",
+            expires:new Date(Date.now()+3*24*60*60*1000),
+        }).status(200).json({message:"Logged in successfully",user:existingUser,token});
     }
     catch (error) {
         console.error("Error logging in:", error);
@@ -150,11 +147,12 @@ exports.changePassword=async(req,res)=>{
             await mailSender(
                 existingUser.email,
                 "Password Changed Successfully",
-                `<p>Your password has been changed successfully.</p>`
+                passwordChangedEmail()
             );
 
             return res.status(200).json({message:"Password changed successfully"});
         }
+        return res.status(400).json({message:"Invalid old password"});
     }
     catch (err){
         console.error("Error changing password:", err);

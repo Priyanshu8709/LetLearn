@@ -5,13 +5,14 @@ const { uploadFileToCloud } = require('../utils/imageUploader');
 exports.createSubSection = async (req, res) => {
     try{
         const{sectionId,title,timeDuration,description} = req.body;
-        const video=req.files.videoFile;
+        const video=req.files?.videoFile;
         if(!sectionId || !title || !timeDuration || !video || !description){
             return res.status(404).json({ error: 'Missing required fields' });
         }
         
+        let videoUpload;
         try{
-            const videoUrl = await uploadFileToCloud(video);
+            videoUpload = await uploadFileToCloud(video);
         }
         catch(error){
             return res.status(500).json({ error: 'Video upload failed' });
@@ -20,10 +21,10 @@ exports.createSubSection = async (req, res) => {
             title:title,
             timeDuration:timeDuration,
             description:description,
-            videoUrl: videoUrl,
+            videoUrl: videoUpload.secure_url,
         });
 
-        const section = await Section.findByIdAndUpdate(sectionId, { $push: { subSections: newSubSection } }, { new: true });
+        const section = await Section.findByIdAndUpdate(sectionId, { $push: { subSections: newSubSection._id } }, { new: true });
         if(!section){
             return res.status(404).json({ error: 'Section not found' });
         }
@@ -48,7 +49,7 @@ exports.deleteSubSection = async (req, res) => {
         if(!section){
             return res.status(404).json({ error: 'Section not found' });
         }
-        const foundSubSection = section.subSections.id(subSectionId);
+        const foundSubSection = section.subSections.some((id) => id.toString() === subSectionId);
         if(!foundSubSection){
             return res.status(404).json({ error: 'Subsection not found' });
         }
@@ -76,8 +77,8 @@ exports.updateSubSection = async (req, res) => {
 
         if(video){
             try{
-                const videoUrl = await uploadFileToCloud(video);
-                updateData.videoUrl = videoUrl;
+                const videoUpload = await uploadFileToCloud(video);
+                updateData.videoUrl = videoUpload.secure_url;
             }
             catch(error){
                 return res.status(500).json({ error: 'Video upload failed' });

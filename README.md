@@ -172,10 +172,10 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 # Client URL
 CLIENT_URL=http://localhost:3000
 
-# Email Configuration (Nodemailer)
-MAIL_SERVICE=gmail
-MAIL_USER=your_email@gmail.com
-MAIL_PASS=your_app_password
+# Brevo Email Configuration
+BREVO_API_KEY=your_brevo_api_key
+EMAIL_FROM_NAME=LetLearn
+EMAIL_FROM_EMAIL=no-reply@letlearn.com
 
 # JWT Secret
 JWT_SECRET=your_jwt_secret_key

@@ -7,7 +7,7 @@ exports.createCourse=async(req,res)=>{
     try{
         const{courseName,courseDescription,whatYouwillLearn,price,tag}=req.body;
         const tumbnail=req.files.thumbnailImage;
-        if(!courseName || !courseDescription || !whatYouwillLearn || !price || !tag || !tumbnail){
+        if(!courseName || !courseDescription || !whatYouwillLearn || !price || !tumbnail){
             return res.status(400).json({
                 sucess:false,
                 message:"Enter valid data, all fiels are required"
@@ -21,31 +21,38 @@ exports.createCourse=async(req,res)=>{
                 message:"You are not the instructor"
             });
         }
-        const tagDetails=await Tag.findById(tag);
-        if(!tagDetails){
-            return res.status(404).json({
-                sucess:false,
-                message:"Invalid tag"
-            });
+        let tagDetails = null;
+        if (tag) {
+            tagDetails = await Tag.findById(tag);
+            if(!tagDetails){
+                return res.status(404).json({
+                    sucess:false,
+                    message:"Invalid tag"
+                });
+            }
         }
+        let thumbnailImage;
         try{
-            const thumbnailImage=await uploadImageToCloud(tumbnail,process.env.FOLDER_NAME);
-        }catch(erorr){
+            thumbnailImage=await uploadImageToCloud(tumbnail,process.env.FOLDER_NAME);
+        }catch(error){
             console.error(error);
             return res.status(500).json({
                 message:"Error while uploading thumbnail to cloud",
                 error:error.message
             })
         }
-        const newCourse = await Course.create({
+        const newCourseData = {
             courseName,
             instructor:instructor._id,
             courseDescription,
-            whatYouwillLearn,
+            whatYouWillLearn:whatYouwillLearn,
             price,
-            tag:tagDetails._id,
-            tumbnail:thumbnailImage.secure_url,
-        });
+            thumbnail:thumbnailImage.secure_url,
+        };
+        if (tagDetails) {
+            newCourseData.tag = tagDetails._id;
+        }
+        const newCourse = await Course.create(newCourseData);
         await User.findByIdAndUpdate(
             {_id:instructor._id},
             {
@@ -170,22 +177,25 @@ exports.updateCourse=async(req,res)=>{
                     message:"You are not the instructor"
                 });
             }
-            const tagDetails=await Tag.findById(tag);
-            if(!tagDetails){
-                return res.status(404).json({
-                    sucess:false,
-                    message:"Invalid tag"
-                });
+            let updatedCourseData = {
+                courseName,
+                courseDescription,
+                whatYouwillLearn,
+                price,
+            };
+            if (tag) {
+                const tagDetails=await Tag.findById(tag);
+                if(!tagDetails){
+                    return res.status(404).json({
+                        sucess:false,
+                        message:"Invalid tag"
+                    });
+                }
+                updatedCourseData.tag = tagDetails._id;
             }
             const updatedCourse=await Course.findByIdAndUpdate(
                 {_id:courseID},
-                {
-                    courseName,
-                    courseDescription,
-                    whatYouwillLearn,
-                    price,
-                    tag:tagDetails._id,
-                },
+                updatedCourseData,
                 {new:true}
             );
             return res.status(200).json({

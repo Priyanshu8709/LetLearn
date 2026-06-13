@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const OtpGenerator = require("otp-generator");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { passwordResetEmail } = require("../templates/emailTemplates");
 require("dotenv").config();
 
 exports.resetPassword=async(req,res)=>{
@@ -17,8 +18,9 @@ exports.resetPassword=async(req,res)=>{
         const token=crypto.randomUUID();
         const updateUser=await user.findByIdAndUpdate(existingUser._id,{
             token:token,resetPasswordExpires:Date.now()+3600000},{new:true});
-        const resetLink=`${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-        await mailSender(email,"Password Reset Request",`Click the link to reset your password: ${resetLink}`);
+        const clientUrl=process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:3000";
+        const resetLink=`${clientUrl}/reset-password?token=${token}`;
+        await mailSender(email,"Password Reset Request",passwordResetEmail({ resetLink }));
         res.status(200).send({message:"Password reset link sent to your email"});
     }
     catch(e){

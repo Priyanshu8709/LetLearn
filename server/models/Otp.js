@@ -1,4 +1,3 @@
-const mailSender = require("../utils/mailSender");
 const mongoose = require("mongoose");
 const OtpSchema = new mongoose.Schema({
     email:{
@@ -18,16 +17,4 @@ const OtpSchema = new mongoose.Schema({
     },
 });
 
-async function createOtp(email, otp) {
-    try {
-       const mailResponse = await mailSender(email, "Your OTP", `Your OTP is: ${otp}`);
-    }
-    catch (error) {
-        console.error("Error saving OTP:", error);
-    }
-}
-OtpSchema.pre("save", async function(next) {
-    await createOtp(this.email, this.otp);
-    next();
-});
 module.exports = mongoose.model("Otp", OtpSchema);

@@ -4,11 +4,11 @@ exports.ProfileSchema=new mongoose.Schema({
     gender:{
         type:String,
         enum:["male","female","other"],
-        required:true,
+        required:false,
     },
     DoB:{
         type:Date,
-        required:true,
+        required:false,
     },
     about:{
         type:String,
