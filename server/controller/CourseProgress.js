@@ -1,7 +1,17 @@
 const CourseProgress = require("../models/CourseProgress");
 const Course = require("../models/Course");
+const Section = require("../models/Section");
 const SubSection = require("../models/SubSection");
-const User = require("../models/User");
+
+// Count all subsections belonging to a course by walking sections → subSections
+const countCourseSubSections = async (courseId) => {
+    // Do NOT populate — keep section IDs as ObjectIds for the find query
+    const course = await Course.findById(courseId).select('sections').lean();
+    if (!course || !course.sections.length) return 0;
+
+    const sections = await Section.find({ _id: { $in: course.sections } }).select('subSections').lean();
+    return sections.reduce((total, s) => total + (s.subSections?.length ?? 0), 0);
+};
 
 exports.updateProgress = async (req, res) => {
     try {
@@ -12,15 +22,12 @@ exports.updateProgress = async (req, res) => {
             return res.status(400).json({ error: 'Course ID and SubSection ID are required' });
         }
 
-        const course = await Course.findById(courseId);
-        if (!course) {
-            return res.status(404).json({ error: 'Course not found' });
-        }
-
-        const subSection = await SubSection.findById(subSectionId);
-        if (!subSection) {
-            return res.status(404).json({ error: 'SubSection not found' });
-        }
+        const [course, subSection] = await Promise.all([
+            Course.findById(courseId).lean(),
+            SubSection.findById(subSectionId).lean(),
+        ]);
+        if (!course)     return res.status(404).json({ error: 'Course not found' });
+        if (!subSection) return res.status(404).json({ error: 'SubSection not found' });
 
         let progress = await CourseProgress.findOne({ userId, courseId });
 
@@ -32,28 +39,26 @@ exports.updateProgress = async (req, res) => {
                 progressPercentage: 0,
             });
         } else {
-            if (!progress.completedVideos.includes(subSectionId)) {
-                progress.completedVideos.push(subSectionId);
-            }
+            const alreadyDone = progress.completedVideos.some(
+                (v) => v.toString() === subSectionId.toString()
+            );
+            if (!alreadyDone) progress.completedVideos.push(subSectionId);
         }
 
-        const totalSubSections = await SubSection.countDocuments({
-            _id: { $in: course.sections }
-        });
-
-        progress.progressPercentage = Math.round(
-            (progress.completedVideos.length / totalSubSections) * 100
-        );
+        const totalSubSections = await countCourseSubSections(courseId);
+        progress.progressPercentage = totalSubSections > 0
+            ? Math.round((progress.completedVideos.length / totalSubSections) * 100)
+            : 0;
 
         await progress.save();
 
         return res.status(200).json({
             message: 'Progress updated successfully',
-            progress: progress,
-            progressPercentage: progress.progressPercentage
+            progress,
+            progressPercentage: progress.progressPercentage,
         });
     } catch (error) {
-        console.error(error);
+        console.error('updateProgress error:', error);
         return res.status(500).json({ error: 'Failed to update progress' });
     }
 };
@@ -63,23 +68,20 @@ exports.getProgress = async (req, res) => {
         const { courseId } = req.params;
         const userId = req.user.id;
 
-        if (!courseId) {
-            return res.status(400).json({ error: 'Course ID is required' });
-        }
-
         const progress = await CourseProgress.findOne({ userId, courseId })
-            .populate('completedVideos');
+            .populate('completedVideos', 'title timeDuration')
+            .lean();
 
         if (!progress) {
-            return res.status(404).json({ error: 'No progress found for this course' });
+            return res.status(200).json({
+                message: 'No progress yet',
+                progress: { completedVideos: [], progressPercentage: 0 },
+            });
         }
 
-        return res.status(200).json({
-            message: 'Progress fetched successfully',
-            progress: progress
-        });
+        return res.status(200).json({ message: 'Progress fetched successfully', progress });
     } catch (error) {
-        console.error(error);
+        console.error('getProgress error:', error);
         return res.status(500).json({ error: 'Failed to fetch progress' });
     }
 };
@@ -89,15 +91,19 @@ exports.getAllUserProgress = async (req, res) => {
         const userId = req.user.id;
 
         const allProgress = await CourseProgress.find({ userId })
-            .populate('courseId', 'courseName thumbnail price')
-            .sort({ createdAt: -1 });
+            .populate('courseId', 'courseName thumbnail price sections')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Filter out records where the course was deleted
+        const valid = allProgress.filter((p) => p.courseId != null);
 
         return res.status(200).json({
             message: 'All progress fetched successfully',
-            progress: allProgress
+            progress: valid,
         });
     } catch (error) {
-        console.error(error);
+        console.error('getAllUserProgress error:', error);
         return res.status(500).json({ error: 'Failed to fetch progress' });
     }
 };
@@ -107,21 +113,14 @@ exports.resetProgress = async (req, res) => {
         const { courseId } = req.params;
         const userId = req.user.id;
 
-        if (!courseId) {
-            return res.status(400).json({ error: 'Course ID is required' });
-        }
-
         const progress = await CourseProgress.findOneAndDelete({ userId, courseId });
-
         if (!progress) {
-            return res.status(404).json({ error: 'No progress found to delete' });
+            return res.status(404).json({ error: 'No progress found to reset' });
         }
 
-        return res.status(200).json({
-            message: 'Progress reset successfully'
-        });
+        return res.status(200).json({ message: 'Progress reset successfully' });
     } catch (error) {
-        console.error(error);
+        console.error('resetProgress error:', error);
         return res.status(500).json({ error: 'Failed to reset progress' });
     }
 };

@@ -76,9 +76,20 @@ exports.rejectCourse = async (req, res) => {
         }
 
         const course = await Course.findByIdAndDelete(courseId);
-
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
+        }
+
+        // Clean up references in instructor's courses array
+        if (course.instructor) {
+            const User = require('../models/User');
+            await User.findByIdAndUpdate(course.instructor, { $pull: { courses: courseId } });
+        }
+
+        // Clean up tag reference
+        if (course.tag) {
+            const Tag = require('../models/Tag');
+            await Tag.findByIdAndUpdate(course.tag, { $pull: { courses: courseId } });
         }
 
         return res.status(200).json({

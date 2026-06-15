@@ -2,19 +2,26 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { ProtectedRoute, GuestRoute } from './components/auth/ProtectedRoute'
 
-import HomePage from './pages/HomePage'
-import CoursesPage from './pages/CoursesPage'
-import CourseDetailPage from './pages/CourseDetailPage'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import DashboardPage from './pages/DashboardPage'
+import HomePage             from './pages/HomePage'
+import CoursesPage          from './pages/CoursesPage'
+import CourseDetailPage     from './pages/CourseDetailPage'
+import LoginPage            from './pages/LoginPage'
+import SignupPage           from './pages/SignupPage'
+import AdminLoginPage       from './pages/AdminLoginPage'
+import AdminSignupPage      from './pages/AdminSignupPage'
+import ResetPasswordPage    from './pages/ResetPasswordPage'
+import DashboardPage        from './pages/DashboardPage'
 import InstructorDashboardPage from './pages/InstructorDashboardPage'
-import AdminPage from './pages/AdminPage'
-import WishlistPage from './pages/WishlistPage'
-import ProfilePage from './pages/ProfilePage'
-import LearnPage from './pages/LearnPage'
-import CreateCoursePage from './pages/CreateCoursePage'
-import NotFoundPage from './pages/NotFoundPage'
+import AdminPage            from './pages/AdminPage'
+import WishlistPage         from './pages/WishlistPage'
+import ProfilePage          from './pages/ProfilePage'
+import LearnPage            from './pages/LearnPage'
+import CreateCoursePage     from './pages/CreateCoursePage'
+import EditCoursePage       from './pages/EditCoursePage'
+import AboutPage            from './pages/AboutPage'
+import ContactPage          from './pages/ContactPage'
+import InstructorsPage      from './pages/InstructorsPage'
+import NotFoundPage         from './pages/NotFoundPage'
 
 export default function App() {
   return (
@@ -30,35 +37,52 @@ export default function App() {
             fontSize: '14px',
           },
           success: { iconTheme: { primary: '#34d399', secondary: '#16161f' } },
-          error: { iconTheme: { primary: '#f87171', secondary: '#16161f' } },
+          error:   { iconTheme: { primary: '#f87171', secondary: '#16161f' } },
         }}
       />
       <Routes>
-        {/* Public */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/courses/:id" element={<CourseDetailPage />} />
+        {/* ── Public ─────────────────────────────────────────────────────── */}
+        <Route path="/"              element={<HomePage />} />
+        <Route path="/courses"       element={<CoursesPage />} />
+        <Route path="/courses/:id"   element={<CourseDetailPage />} />
+        <Route path="/about"         element={<AboutPage />} />
+        <Route path="/contact"       element={<ContactPage />} />
+        <Route path="/instructors"   element={<InstructorsPage />} />
 
-        {/* Auth */}
-        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
+        {/* ── Auth (redirect to dashboard if already logged in) ───────────── */}
+        <Route path="/login"         element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/signup"        element={<GuestRoute><SignupPage /></GuestRoute>} />
+        <Route path="/admin/login"   element={<GuestRoute><AdminLoginPage /></GuestRoute>} />
+        <Route path="/admin/signup"  element={<GuestRoute><AdminSignupPage /></GuestRoute>} />
 
-        {/* Student */}
-        <Route path="/dashboard" element={<ProtectedRoute roles={['student']}><DashboardPage /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute roles={['student']}><WishlistPage /></ProtectedRoute>} />
-        <Route path="/learn/:id" element={<ProtectedRoute roles={['student']}><LearnPage /></ProtectedRoute>} />
+        {/* Reset password: public — token comes via email link */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Instructor */}
-        <Route path="/instructor/dashboard" element={<ProtectedRoute roles={['instructor']}><InstructorDashboardPage /></ProtectedRoute>} />
-        <Route path="/instructor/create-course" element={<ProtectedRoute roles={['instructor']}><CreateCoursePage /></ProtectedRoute>} />
+        {/* ── Student ────────────────────────────────────────────────────── */}
+        <Route path="/dashboard"
+          element={<ProtectedRoute roles={['student']}><DashboardPage /></ProtectedRoute>} />
+        <Route path="/wishlist"
+          element={<ProtectedRoute roles={['student']}><WishlistPage /></ProtectedRoute>} />
+        <Route path="/learn/:id"
+          element={<ProtectedRoute roles={['student']}><LearnPage /></ProtectedRoute>} />
 
-        {/* Admin */}
-        <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />
+        {/* ── Instructor ─────────────────────────────────────────────────── */}
+        <Route path="/instructor/dashboard"
+          element={<ProtectedRoute roles={['instructor']}><InstructorDashboardPage /></ProtectedRoute>} />
+        <Route path="/instructor/create-course"
+          element={<ProtectedRoute roles={['instructor']}><CreateCoursePage /></ProtectedRoute>} />
+        <Route path="/instructor/edit-course/:id"
+          element={<ProtectedRoute roles={['instructor']}><EditCoursePage /></ProtectedRoute>} />
 
-        {/* Profile – all roles */}
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        {/* ── Admin ──────────────────────────────────────────────────────── */}
+        <Route path="/admin"
+          element={<ProtectedRoute roles={['admin']}><AdminPage /></ProtectedRoute>} />
 
-        {/* 404 */}
+        {/* ── Shared (all authenticated roles) ───────────────────────────── */}
+        <Route path="/profile"
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+        {/* ── 404 ────────────────────────────────────────────────────────── */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

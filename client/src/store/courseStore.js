@@ -173,18 +173,20 @@ const useCourseStore = create((set, get) => ({
   // Server: { message, progress: CourseProgress }
   fetchCourseProgress: async (courseId) => {
     const res = await api.get(`/progress/${courseId}`)
-    return res.progress
+    return res.progress   // { completedVideos: [], progressPercentage: 0 }
   },
 
   // Server: { message, progress, progressPercentage }
   updateProgress: async (courseId, subSectionId) => {
     const res = await api.post('/progress/update', { courseId, subSectionId })
+    // courseId may be a populated object or a raw string in the store
     set((s) => ({
-      progress: s.progress.map((p) =>
-        p.courseId?._id === courseId || p.courseId === courseId
+      progress: s.progress.map((p) => {
+        const pCourseId = p.courseId?._id?.toString() ?? p.courseId?.toString()
+        return pCourseId === courseId.toString()
           ? { ...p, progressPercentage: res.progressPercentage ?? p.progressPercentage }
           : p
-      ),
+      }),
     }))
     return res
   },
@@ -218,8 +220,9 @@ const useCourseStore = create((set, get) => ({
   },
 
   // Server: { message }
-  deleteRating: async (courseId) => {
-    return api.delete(`/ratings/${courseId}`)
+  deleteRating: async (reviewId) => {
+    // Delete by specific review _id (ownership enforced server-side)
+    return api.delete(`/ratings/review/${reviewId}`)
   },
 
   // ── Sections ──────────────────────────────────────────────────────────────

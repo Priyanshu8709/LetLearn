@@ -3,6 +3,8 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const dotenv = require('dotenv');
 const cloudinary = require('cloudinary').v2;
+const os = require('os');
+const path = require('path');
 
 const db = require('./config/db');
 
@@ -32,7 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(fileUpload({
     useTempFiles: true,
-    tempFileDir: '/tmp/',
+    tempFileDir: path.join(os.tmpdir(), 'uploads'),
     limits: { fileSize: 50 * 1024 * 1024 },
 }));
 

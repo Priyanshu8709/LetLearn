@@ -1,55 +1,66 @@
 const mailSender = require('../utils/mailSender');
-const user = require("../models/User");
-const Otp = require("../models/Otp");
-const jwt = require("jsonwebtoken");
-const OtpGenerator = require("otp-generator");
+const { passwordResetTemplate } = require('../utils/emailTemplates');
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const { passwordResetEmail } = require("../templates/emailTemplates");
 require("dotenv").config();
 
-exports.resetPassword=async(req,res)=>{
-    try{
-        const {email}=req.body;
-        const existingUser=await user.findOne({email});
-        if(!existingUser){
-            return res.status(404).send({error:"User not found"});
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(404).json({ error: "No account found with that email address" });
         }
-        const token=crypto.randomUUID();
-        const updateUser=await user.findByIdAndUpdate(existingUser._id,{
-            token:token,resetPasswordExpires:Date.now()+3600000},{new:true});
-        const clientUrl=process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:3000";
-        const resetLink=`${clientUrl}/reset-password?token=${token}`;
-        await mailSender(email,"Password Reset Request",passwordResetEmail({ resetLink }));
-        res.status(200).send({message:"Password reset link sent to your email"});
-    }
-    catch(e){
-        res.status(500).send({error:"Error sending password reset email"});
+
+        const token = crypto.randomUUID();
+        const expires = Date.now() + 3600000; // 1 hour
+
+        existingUser.token = token;
+        existingUser.resetPasswordExpires = expires;
+        await existingUser.save();
+
+        const resetLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/update?token=${token}`;
+
+        await mailSender(
+            email,
+            "Reset your LetLearn password",
+            passwordResetTemplate(existingUser.firstname, resetLink)
+        );
+
+        return res.status(200).json({ message: "Password reset link sent to your email" });
+    } catch (err) {
+        console.error("Error sending reset email:", err);
+        return res.status(500).json({ error: "Error sending password reset email" });
     }
 };
 
-exports.updatePassword=async(req,res)=>{
-    try{
-        const {token,newPassword}=req.body;
-        if(!token || !newPassword){
-            return res.status(400).send({error:"Token and new password are required"});
-        }
-        const existingUser=await user.findOne({token:token});
+exports.updatePassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
 
-        if(!existingUser){
-            return res.status(400).send({error:"Invalid or expired token"});
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: "Token and new password are required" });
         }
-        if(existingUser.resetPasswordExpires< Date.now()){
-            return res.status(400).send({error:"Token has expired"});
+
+        const existingUser = await User.findOne({ token });
+        if (!existingUser) {
+            return res.status(400).json({ error: "Invalid or expired reset token" });
         }
-        const hashedPassword=await bcrypt.hash(newPassword,10);
-        existingUser.password=hashedPassword;
-        existingUser.token=undefined;
-        existingUser.resetPasswordExpires=undefined;
+
+        if (existingUser.resetPasswordExpires < Date.now()) {
+            return res.status(400).json({ error: "Reset token has expired. Please request a new one." });
+        }
+
+        existingUser.password = await bcrypt.hash(newPassword, 10);
+        existingUser.token = undefined;
+        existingUser.resetPasswordExpires = undefined;
         await existingUser.save();
-        res.status(200).send({message:"Password updated successfully"});
-    }
-    catch(e){
-        res.status(500).send({error:"Error updating password"});
+
+        return res.status(200).json({ message: "Password updated successfully" });
+    } catch (err) {
+        console.error("Error updating password:", err);
+        return res.status(500).json({ error: "Error updating password" });
     }
 };

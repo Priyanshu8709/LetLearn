@@ -1,6 +1,8 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Course = require("../models/Course");
 const User = require("../models/User");
+const mailSender = require("../utils/mailSender");
+const { enrollmentTemplate } = require("../utils/emailTemplates");
 
 exports.capturePayment = async (req, res) => {
     try {
@@ -33,18 +35,19 @@ exports.capturePayment = async (req, res) => {
                     product_data: {
                         name: course.courseName,
                         description: course.courseDescription,
-                        images: [course.thumbnail],
+                        images: course.thumbnail ? [course.thumbnail] : [],
                     },
                     unit_amount: course.price * 100,
                 },
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `${process.env.CLIENT_URL}/course/${courseId}?payment=success`,
-            cancel_url: `${process.env.CLIENT_URL}/course/${courseId}?payment=cancelled`,
+            // {CHECKOUT_SESSION_ID} is a Stripe template variable — replaced automatically
+            success_url: `${process.env.CLIENT_URL}/courses/${courseId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url:  `${process.env.CLIENT_URL}/courses/${courseId}?payment=cancelled`,
             metadata: {
                 courseId: courseId.toString(),
-                userId: userId.toString(),
+                userId:   userId.toString(),
             },
         });
 
@@ -84,6 +87,13 @@ exports.verifyPayment = async (req, res) => {
                 const user = await User.findById(userId);
                 user.courses.push(courseId);
                 await user.save();
+
+                // Send enrollment confirmation email
+                mailSender(
+                    user.email,
+                    `You're enrolled in ${course.courseName}!`,
+                    enrollmentTemplate(user.firstname, course.courseName, courseId)
+                ).catch((err) => console.error("Enrollment email failed:", err.message));
             }
 
             return res.status(200).json({

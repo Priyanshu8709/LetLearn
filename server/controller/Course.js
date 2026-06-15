@@ -63,15 +63,17 @@ exports.createCourse=async(req,res)=>{
             {new:true}
         );
 
-        await Tag.findByIdAndUpdate(
-            {_id:tagDetails._id},
-            {
-                $push:{
-                    courses:newCourse._id
-                }
-            },
-            {new:true}
-        );
+        if (tagDetails) {
+            await Tag.findByIdAndUpdate(
+                {_id:tagDetails._id},
+                {
+                    $push:{
+                        courses:newCourse._id
+                    }
+                },
+                {new:true}
+            );
+        }
         return res.status(200).json({
             sucess:true,
             message:"New Cousre Created SucessFully",
@@ -128,7 +130,11 @@ exports.getCourseDetails=async(req,res)=>{
         .populate("instructor")
         .populate("RatingAndReview")
         .populate("StudentsEnrolled")
-        .populate("tag");
+        .populate("tag")
+        .populate({
+            path: 'sections',
+            populate: { path: 'subSections' }
+        });
          if(!courseDetails){
             return res.status(404).json({
                 sucess:false,
@@ -156,10 +162,10 @@ exports.updateCourse=async(req,res)=>{
         try{
         const courseID=req.params.id;
         const {courseName,courseDescription,whatYouwillLearn,price,tag}=req.body;
-        if(!courseName || !courseDescription || !whatYouwillLearn || !price || !tag){
+        if(!courseName || !courseDescription || !whatYouwillLearn || price === undefined || price === null){
             return res.status(400).json({
                 sucess:false,
-                message:"Enter valid data, all fiels are required"
+                message:"Enter valid data, all fields are required"
             });
         }
         const courseDetails=await Course.findById(courseID);
@@ -171,7 +177,7 @@ exports.updateCourse=async(req,res)=>{
         }
             const userID=req.user.id;
             const instructor=await User.findById(userID);
-            if(!instructor.accountType=="instrctor"){
+            if(instructor.accountType !== "instructor"){
                 return res.status(404).json({
                     sucess:false,
                     message:"You are not the instructor"
@@ -180,7 +186,7 @@ exports.updateCourse=async(req,res)=>{
             let updatedCourseData = {
                 courseName,
                 courseDescription,
-                whatYouwillLearn,
+                whatYouWillLearn: whatYouwillLearn,
                 price,
             };
             if (tag) {
@@ -196,7 +202,7 @@ exports.updateCourse=async(req,res)=>{
             const updatedCourse=await Course.findByIdAndUpdate(
                 {_id:courseID},
                 updatedCourseData,
-                {new:true}
+                {returnDocument:'after'}
             );
             return res.status(200).json({
                 sucess:true,
@@ -340,13 +346,15 @@ exports.getStudentCourses=async(req,res)=>{
     try{
         const userID=req.user.id;
         const student=await User.findById(userID);
-        if(!student.accountType=="student"){
-            return res.status(404).json({
+        if(student.accountType !== "student"){   // Fix: was `!x == y` which is always false
+            return res.status(403).json({
                 sucess:false,
-                message:"You are not the student"
+                message:"You are not a student"
             });
         }
-        const courses=await Course.find({_id:{$in:student.courses}});
+        const courses=await Course.find({_id:{$in:student.courses}})
+            .populate("instructor","firstname lastname images")
+            .populate("tag","name");
         return res.status(200).json({
             sucess:true,
             message:"Sucessfully got the student courses",

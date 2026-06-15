@@ -24,7 +24,7 @@ exports.createSubSection = async (req, res) => {
             videoUrl: videoUpload.secure_url,
         });
 
-        const section = await Section.findByIdAndUpdate(sectionId, { $push: { subSections: newSubSection._id } }, { new: true });
+        const section = await Section.findByIdAndUpdate(sectionId, { $push: { subSections: newSubSection._id } }, { returnDocument: 'after' });
         if(!section){
             return res.status(404).json({ error: 'Section not found' });
         }
@@ -85,7 +85,7 @@ exports.updateSubSection = async (req, res) => {
             }
         }
 
-        const updatedSubSection = await SubSection.findByIdAndUpdate(subSectionId, updateData, { new: true });
+        const updatedSubSection = await SubSection.findByIdAndUpdate(subSectionId, updateData, { returnDocument: 'after' });
 
         if(!updatedSubSection){
             return res.status(404).json({ error: 'Subsection not found' });

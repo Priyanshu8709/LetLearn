@@ -18,25 +18,23 @@ exports.addToWishlist = async (req, res) => {
         let wishlist = await Wishlist.findOne({ userId });
 
         if (!wishlist) {
-            wishlist = await Wishlist.create({
-                userId,
-                courses: [courseId]
-            });
+            wishlist = await Wishlist.create({ userId, courses: [courseId] });
         } else {
-            if (!wishlist.courses.includes(courseId)) {
-                wishlist.courses.push(courseId);
-                await wishlist.save();
-            } else {
+            // FIX: ObjectId.toString() comparison — Array.includes() fails on ObjectId vs string
+            const alreadyIn = wishlist.courses.some((id) => id.toString() === courseId.toString());
+            if (alreadyIn) {
                 return res.status(400).json({ error: 'Course already in wishlist' });
             }
+            wishlist.courses.push(courseId);
+            await wishlist.save();
         }
 
         return res.status(200).json({
             message: 'Course added to wishlist successfully',
-            wishlist: wishlist
+            wishlist,
         });
     } catch (error) {
-        console.error(error);
+        console.error('addToWishlist error:', error);
         return res.status(500).json({ error: 'Failed to add to wishlist' });
     }
 };
@@ -51,20 +49,19 @@ exports.removeFromWishlist = async (req, res) => {
         }
 
         const wishlist = await Wishlist.findOne({ userId });
-
         if (!wishlist) {
             return res.status(404).json({ error: 'Wishlist not found' });
         }
 
-        wishlist.courses = wishlist.courses.filter(id => id.toString() !== courseId);
+        wishlist.courses = wishlist.courses.filter((id) => id.toString() !== courseId.toString());
         await wishlist.save();
 
         return res.status(200).json({
             message: 'Course removed from wishlist successfully',
-            wishlist: wishlist
+            wishlist,
         });
     } catch (error) {
-        console.error(error);
+        console.error('removeFromWishlist error:', error);
         return res.status(500).json({ error: 'Failed to remove from wishlist' });
     }
 };
@@ -73,25 +70,24 @@ exports.getWishlist = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        const wishlist = await Wishlist.findOne({ userId })
-            .populate({
-                path: 'courses',
-                select: 'courseName price thumbnail averageRating StudentsEnrolled'
-            });
+        const wishlist = await Wishlist.findOne({ userId }).populate({
+            path: 'courses',
+            select: 'courseName price thumbnail averageRating StudentsEnrolled courseDescription',
+        });
 
         if (!wishlist) {
             return res.status(200).json({
                 message: 'Wishlist is empty',
-                wishlist: { courses: [] }
+                wishlist: { courses: [] },
             });
         }
 
         return res.status(200).json({
             message: 'Wishlist fetched successfully',
-            wishlist: wishlist
+            wishlist,
         });
     } catch (error) {
-        console.error(error);
+        console.error('getWishlist error:', error);
         return res.status(500).json({ error: 'Failed to fetch wishlist' });
     }
 };
@@ -105,16 +101,11 @@ exports.isInWishlist = async (req, res) => {
             return res.status(400).json({ error: 'Course ID is required' });
         }
 
-        const wishlist = await Wishlist.findOne({
-            userId,
-            courses: courseId
-        });
+        const wishlist = await Wishlist.findOne({ userId, courses: courseId });
 
-        return res.status(200).json({
-            isInWishlist: !!wishlist
-        });
+        return res.status(200).json({ isInWishlist: !!wishlist });
     } catch (error) {
-        console.error(error);
+        console.error('isInWishlist error:', error);
         return res.status(500).json({ error: 'Failed to check wishlist' });
     }
 };

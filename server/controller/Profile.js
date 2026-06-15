@@ -20,7 +20,7 @@ exports.updateProfile=async(req,res)=>{
         if(!profile){
             return res.status(404).json({ error: 'Profile not found' });
         }
-        profile.dob=dob;
+        profile.DoB=dob;
         profile.about=about;
         profile.contactNumber=contactNumber;
         profile.gender=gender;
@@ -56,18 +56,34 @@ exports.getProfile=async(req,res)=>{
 
 exports.deleteUser=async(req,res)=>{
     try{
-        const userId = req.user.id; // Assuming user ID is available in the request object
+        const userId = req.user.id;
         if(!userId){
             return res.status(404).json({ error: 'User ID is missing' });
         }
-        //cronet job can be implemented to delete user data after a certain period instead of deleting it immediately
         const userToDelete = await User.findById(userId);
         if(!userToDelete){
             return res.status(404).json({ error: 'User not found' });
         }
-        const profileId=userToDelete.additionalDetails;
-        await Profile.findByIdAndDelete(profileId);
-        //unenroll user from all courses and delete progress (to be implemented)
+
+        // Clean up related data
+        const CourseProgress = require('../models/CourseProgress');
+        const Wishlist = require('../models/Wishlist');
+        const Course = require('../models/Course');
+
+        await Promise.all([
+            // Delete profile
+            Profile.findByIdAndDelete(userToDelete.additionalDetails),
+            // Delete all progress records
+            CourseProgress.deleteMany({ userId }),
+            // Delete wishlist
+            Wishlist.findOneAndDelete({ userId }),
+            // Remove user from all enrolled courses
+            Course.updateMany(
+                { StudentsEnrolled: userId },
+                { $pull: { StudentsEnrolled: userId } }
+            ),
+        ]);
+
         await User.findByIdAndDelete(userId);
         return res.status(200).json({ message: 'User deleted successfully' });
     }
