@@ -89,7 +89,7 @@ exports.signUp = async (req, res) => {
         });
 
         // Welcome email (fire and forget — don't block signup on email failure)
-        mailSender(email, "Welcome to LetLearn! 🎉", welcomeTemplate(firstname)).catch((err) =>
+        mailSender(email, "Welcome to LetLearn! ", welcomeTemplate(firstname)).catch((err) =>
             console.error("Welcome email failed:", err.message)
         );
 
@@ -124,9 +124,10 @@ exports.login = async (req, res) => {
         const payload = {
             id: existingUser._id,
             email: existingUser.email,
+            name: existingUser.firstname + " " + existingUser.lastname,
             role: existingUser.accountType,
         };
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "3d" });
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "12h" });
 
         existingUser.password = undefined;
 

@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start":   "node index.js",
+    "dev":     "nodemon index.js",
+    "dev:all": "concurrently --names \"server,client\" --prefix-colors \"cyan,magenta\" \"nodemon index.js\" \"npm run dev --prefix ../client\""
   },
   "keywords": [],
   "author": "",
@@ -24,5 +25,8 @@
     "otp-generator": "^4.0.1",
     "sib-api-v3-sdk": "^8.0.1",
     "stripe": "^14.25.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }

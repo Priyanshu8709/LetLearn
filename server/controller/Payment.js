@@ -31,7 +31,7 @@ exports.capturePayment = async (req, res) => {
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
-                    currency: 'inr',
+                    currency: 'usd',
                     product_data: {
                         name: course.courseName,
                         description: course.courseDescription,

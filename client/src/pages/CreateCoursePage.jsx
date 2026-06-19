@@ -145,7 +145,7 @@ export default function CreateCoursePage() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <Input
-                label="Price (₹)"
+                label="Price ($)"
                 type="number"
                 placeholder="499"
                 min="0"

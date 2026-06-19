@@ -8,10 +8,10 @@ import useCourseStore from '../store/courseStore'
 import { cn } from '../lib/utils'
 
 const PRICE_RANGES = [
-  { label: 'Any Price', value: '' },
-  { label: 'Under ₹500', value: '0-500' },
-  { label: '₹500 - ₹2000', value: '500-2000' },
-  { label: 'Above ₹2000', value: '2000-' },
+  { label: 'Any Price',  value: '' },
+  { label: 'Under $10', value: '0-10' },
+  { label: '$10 - $30', value: '10-30' },
+  { label: 'Above $30', value: '30-' },
 ]
 
 const RATINGS = [

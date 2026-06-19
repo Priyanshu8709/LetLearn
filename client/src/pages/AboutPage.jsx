@@ -8,25 +8,18 @@ import PageLayout from '../components/layout/PageLayout'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const TEAM = [
-  { name: 'Priya Sharma',  role: 'Co-Founder & CEO',      avatar: 'P', color: 'from-brand-500 to-purple-600' },
-  { name: 'Rahul Verma',   role: 'Co-Founder & CTO',      avatar: 'R', color: 'from-emerald-500 to-teal-600' },
-  { name: 'Sneha Gupta',   role: 'Head of Content',       avatar: 'S', color: 'from-amber-500 to-orange-600' },
-  { name: 'Arjun Mehta',   role: 'Head of Engineering',   avatar: 'A', color: 'from-red-500 to-rose-600' },
-]
-
 const VALUES = [
-  { icon: <Heart size={22} />,      title: 'Learner First',       desc: 'Every decision starts with one question: does this help learners succeed?',    color: 'from-red-500 to-rose-500' },
-  { icon: <Globe size={22} />,      title: 'Accessible to All',   desc: 'Quality education should not depend on where you were born or what you earn.',  color: 'from-brand-500 to-blue-500' },
-  { icon: <Target size={22} />,     title: 'Outcome Focused',     desc: 'We measure success by the jobs found and skills gained, not courses sold.',     color: 'from-emerald-500 to-teal-500' },
-  { icon: <TrendingUp size={22} />, title: 'Continuous Improvement', desc: 'We ship, learn, and iterate. Perfection is the enemy of progress.',          color: 'from-purple-500 to-pink-500' },
+  { icon: <Heart size={22} />,      title: 'Learner First',          desc: 'Every decision starts with one question: does this help learners succeed?',   color: 'from-red-500 to-rose-500' },
+  { icon: <Globe size={22} />,      title: 'Accessible to All',      desc: 'Quality education should not depend on where you were born or what you earn.', color: 'from-brand-500 to-blue-500' },
+  { icon: <Target size={22} />,     title: 'Outcome Focused',        desc: 'We measure success by the jobs found and skills gained, not courses sold.',    color: 'from-emerald-500 to-teal-500' },
+  { icon: <TrendingUp size={22} />, title: 'Continuous Improvement', desc: 'We ship, learn, and iterate. Perfection is the enemy of progress.',            color: 'from-purple-500 to-pink-500' },
 ]
 
 const STATS = [
-  { value: '50K+',   label: 'Active Learners',   icon: <Users size={20} /> },
-  { value: '1,200+', label: 'Expert Courses',     icon: <BookOpen size={20} /> },
-  { value: '98%',    label: 'Satisfaction Rate',  icon: <Award size={20} /> },
-  { value: '40+',    label: 'Countries Reached',  icon: <Globe size={20} /> },
+  { value: '50K+',   label: 'Active Learners',  icon: <Users size={20} /> },
+  { value: '1,200+', label: 'Expert Courses',    icon: <BookOpen size={20} /> },
+  { value: '98%',    label: 'Satisfaction Rate', icon: <Award size={20} /> },
+  { value: '40+',    label: 'Countries Reached', icon: <Globe size={20} /> },
 ]
 
 export default function AboutPage() {
@@ -160,32 +153,6 @@ export default function AboutPage() {
               <h3 className="text-base font-semibold text-white mb-2">{v.title}</h3>
               <p className="text-sm text-white/40 leading-relaxed">{v.desc}</p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Team */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-14">
-          <h2 className="text-4xl font-extrabold text-white mb-4">The Team</h2>
-          <p className="text-white/40 max-w-xl mx-auto">Small team, big ambitions. We're always looking for great people.</p>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {TEAM.map((member, i) => (
-            <motion.div
-              key={member.name}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-2xl bg-surface-2 border border-white/6 p-8 text-center hover:border-brand-500/30 transition-all"
-            >
-              <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${member.color} flex items-center justify-center text-2xl font-extrabold text-white mx-auto mb-4`}>
-                {member.avatar}
-              </div>
-              <h3 className="font-semibold text-white">{member.name}</h3>
-              <p className="text-sm text-white/40 mt-1">{member.role}</p>
-            </motion.div>
           ))}
         </div>
       </section>

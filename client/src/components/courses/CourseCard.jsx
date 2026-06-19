@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Users, Star, Heart, BookOpen } from 'lucide-react'
+import { Users, Star, Heart, BookOpen, Play } from 'lucide-react'
 import { formatPrice, truncate } from '../../lib/utils'
 import Badge from '../ui/Badge'
 import Avatar from '../ui/Avatar'
@@ -10,9 +10,14 @@ import toast from 'react-hot-toast'
 
 export default function CourseCard({ course, index = 0 }) {
   const { addToWishlist, wishlist } = useCourseStore()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   const isWishlisted = wishlist.some((c) => c._id === course._id)
+
+  // Check if the logged-in user is enrolled in this course
+  const isEnrolled = isAuthenticated() && course.StudentsEnrolled?.some(
+    (s) => (s._id ?? s)?.toString() === user?._id?.toString()
+  )
 
   const handleWishlist = async (e) => {
     e.preventDefault()
@@ -49,17 +54,19 @@ export default function CourseCard({ course, index = 0 }) {
                 <BookOpen size={40} className="text-white/10" />
               </div>
             )}
-            {/* Wishlist button */}
-            <button
-              onClick={handleWishlist}
-              className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-lg glass hover:bg-white/15 transition-all"
-              aria-label="Add to wishlist"
-            >
-              <Heart
-                size={14}
-                className={isWishlisted ? 'fill-red-400 text-red-400' : 'text-white/60'}
-              />
-            </button>
+            {/* Wishlist button — hide when enrolled */}
+            {!isEnrolled && (
+              <button
+                onClick={handleWishlist}
+                className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-lg glass hover:bg-white/15 transition-all"
+                aria-label="Add to wishlist"
+              >
+                <Heart
+                  size={14}
+                  className={isWishlisted ? 'fill-red-400 text-red-400' : 'text-white/60'}
+                />
+              </button>
+            )}
             {course.tag && (
               <div className="absolute bottom-3 left-3">
                 <Badge variant="brand">{course.tag?.name ?? course.tag}</Badge>
@@ -103,14 +110,21 @@ export default function CourseCard({ course, index = 0 }) {
               </span>
             </div>
 
-            {/* Price */}
+            {/* Price row */}
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold text-white">
                 {formatPrice(course.price)}
               </span>
-              <span className="text-xs px-3 py-1.5 rounded-lg bg-brand-500/15 text-brand-300 font-medium">
-                Enroll
-              </span>
+              {isEnrolled ? (
+                <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-medium">
+                  <Play size={11} />
+                  Continue
+                </span>
+              ) : (
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-brand-500/15 text-brand-300 font-medium">
+                  Enroll
+                </span>
+              )}
             </div>
           </div>
         </div>
