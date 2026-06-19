@@ -23,7 +23,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:3000')
+const defaultClientUrls = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://let-learn.vercel.app',
+    'https://let-learn-7chm9r987-priyanshu8709s-projects.vercel.app',
+];
+
+const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || defaultClientUrls.join(','))
     .split(',')
     .map((origin) => origin.trim().replace(/\/$/, ''))
     .filter(Boolean);
@@ -35,7 +42,7 @@ app.use(cors({
             return callback(null, true);
         }
 
-        return callback(new Error(`CORS blocked origin: ${origin}`));
+        return callback(null, false);
     },
     credentials: true,
 }));
