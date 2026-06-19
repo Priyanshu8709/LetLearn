@@ -35,14 +35,25 @@ const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || def
     .map((origin) => origin.trim().replace(/\/$/, ''))
     .filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+
+    const normalizedOrigin = origin.replace(/\/$/, '');
+
+    if (allowedOrigins.includes(normalizedOrigin)) return true;
+
+    try {
+        const { hostname } = new URL(normalizedOrigin);
+        return hostname === 'let-learn.vercel.app' || /^let-learn-.*\.vercel\.app$/.test(hostname);
+    } catch {
+        return false;
+    }
+};
+
 // Middleware
 app.use(cors({
     origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
-            return callback(null, true);
-        }
-
-        return callback(null, false);
+        return callback(null, isAllowedOrigin(origin));
     },
     credentials: true,
 }));
